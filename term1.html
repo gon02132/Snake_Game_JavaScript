@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<script type="text/javascript" src="http://code.jquery.com/jquery-latest.js"></script>
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <style>
+        /* 테이블과 이미지의 간격을 딱맞추기위해 0으로 초기화*/
+        table{
+            border:0px;
+            border-collapse:collapse;
+            border-spacing: 0;
+        }
+        img,tr,td{
+            width: 30px;
+            height: 30px;
+            margin: 0px;
+            padding: 0px;
+            line-height: 0px;
+        }
+        .fixed_div {
+            position:fixed;
+            bottom:0;
+            width:100%;
+            height:50px;
+            background:#ccc;
+            display: inline-block;
+        }
+    </style>
+
+    <script>
+
+        //키보드로부터 화살표를 칠시, 스크롤되는것을 막는 구문
+        $('html, body').css({'overflow': 'hidden', 'height': '100%'});
+        $('#element').on('scroll', function(event) {
+            event.preventDefault();
+            //스크롤시 Prevent 한다
+            return false;
+        });
+
+        //최초 사이즈 입력
+        while(true) {
+            var input = prompt("가로*세로 길이를 입력하세요(2-150) @@ 권장:100 @@");
+            if(input>=2 && input<=150)
+                break;
+        }
+        var Global_values = {
+            ing: 0,
+            random_ing: 0,
+            random_check: 0,
+            eventSave: null,
+            isIntervalPlaying: 0,
+            head_location: "0.000",
+            tail_count: -1,
+            check: 0,
+            name_count: 2,
+            move: 0,
+            SleepTIme: 1000,
+            bomb_count: 0,
+            fast_count: 0,
+            slow_count: 0,
+            long_count: 0
+        }
+
+        //ing변수의         경우 Interval 제어(정지)를 위해 생성
+        //random_ing변수    경우 Random_Interval 제어(정지)를 위해 생성
+        //random_check변수  경우 랜덤 쓰래드가 한번이상 실행되는걸 막기위해 생성
+        //eventSave변수의   경우 클릭시, event객체를 잡아두기위해 생성
+        //isIntervalPlaying 경우 실행도중 다른 방향키를 입력받았을시 interval제어를 위해 생성
+        //head_location     경우 머리의 위치 표시
+        //tail_location     경우 꼬리의 위치 표시 -> 시작은 머리와 같음
+        //check의           경우 보드판 감추기에 실행읠 막기위해 생성
+        //name_count의      경우 속성name으로 꼬리 조작 -> 버그방지를위해 3부터 시작
+
+        //아이템 갯수 카운터
+
+        //사용자가 키보드로부터 방향키를 입력시 함수 실행
+        window.onkeydown = function (event) {
+            var testKeycode = document.getElementById("test");
+            testKeycode.innerHTML = event.keyCode; // 주석 제거시 현재 진행방향 표시
+
+            var check_BT = document.getElementById("DBT");
+            if((event.keyCode=='37' || event.keyCode=='38'|| event.keyCode=='39'|| event.keyCode=='40' || event.keyCode == '80')
+                && check_BT != null) {
+                Global_values.eventSave = event;
+                //event가 다른 함수로 넘어갈경우 값이 사라져서 변수선언해서 잡아 놓음
+                //또한, 다른 키 입력시 바뀌는값을 Interval함수에 넘겨줌
+
+                if(Global_values.isIntervalPlaying === 0) {
+                    //2번째인자값ms마다 Start 함수 실행, 최초 한번만 Interval호출(여러개호출 방지)
+                    Global_values.ing = setInterval("Start(Global_values.eventSave)", Global_values.SleepTIme);
+                    Global_values.isIntervalPlaying = 1;
+                }
+            }
+        }
+
+        //매ms마다 실행될 함수
+        function Start(event) {
+            var fir =  parseInt(Global_values.head_location);
+            var sec =  Math.round((parseFloat(Global_values.head_location)-parseInt(fir))*1000);
+
+            var check_BT = document.getElementById("DBT");
+            var head_point = document.getElementById(Global_values.head_location+"");
+
+            //하단바 값 최신화
+            bar_info();
+
+
+            if(check_BT == null || event.keyCode == 80){
+                //게임도중 삭제버튼을 누를시 실행 종료
+                clearInterval(Global_values.ing);
+                clearInterval(Global_values.random_ing);
+                Global_values.isIntervalPlaying = 0;
+                Global_values.random_check = 0;
+                return;
+            }
+
+            //이전키가 P(Stop)키를 눌렀으면 랜덤생성쓰레드 run
+            if(Global_values.move.keyCode == 80 || Global_values.random_check == 0){
+                Global_values.random_ing = setInterval("Random_Create_Item()", 1000);
+                Global_values.random_check = 1;
+            }
+
+            //check로 버튼눌렀을시 실행되는것을 제어
+            //현재키와 이전키가 정반대 키를 눌렀을시: 현재키 <= 이전키
+            if(Global_values.check!=1) {
+                if(Global_values.move != null) {
+                    if (Global_values.move.keyCode  == 37) {
+                        if (event.keyCode == 39) {
+                            event = Global_values.move;
+                        }
+                    }
+                    else if (Global_values.move.keyCode  == 38) {
+                        if (event.keyCode == 40) {
+                            event = Global_values.move;
+                        }
+                    } else if (Global_values.move.keyCode  == 39) {
+                        if (event.keyCode == 37) {
+                            event = Global_values.move;
+                        }
+
+                    } else if (Global_values.move.keyCode  == 40) {
+                        if (event.keyCode == 38) {
+                            event = Global_values.move;
+                        }
+                    }
+                }
+
+                //화면 자동 조절 - 현재 window의 가로 세로길이를 구하여 중앙으로
+                var offset = $(head_point).offset();
+                offset.left -= (window.innerWidth/2);
+                offset.top -= (window.innerHeight/2-90);
+
+                //예외 발생시 GameOver
+                try {
+                    head_point.innerHTML = "<img src='tail.png'>";
+                    switch (event.keyCode) {
+                        //←
+                        case 37:
+                            Global_values.head_location = (parseFloat(Global_values.head_location) - 0.001).toFixed(3);
+                            head_point = document.getElementById(Global_values.head_location + "");
+                            //각 case의 offset 설정은 도중 다른화살표 입력시 화면흔들림을 줄여준다.
+                            offset.left -= 30;
+                            break;
+                        //↑
+                        case 38:
+                            Global_values.head_location = (parseFloat(Global_values.head_location) - 1.000).toFixed(3);
+                            head_point = document.getElementById(Global_values.head_location + "");
+                            offset.top -= 30;
+                            break;
+                        //→
+                        case 39:
+                            Global_values.head_location = (parseFloat(Global_values.head_location) + 0.001).toFixed(3);
+                            head_point = document.getElementById(Global_values.head_location + "");
+                            offset.left += 30;
+                            break;
+                        //↓
+                        case 40:
+                            Global_values.head_location = (parseFloat(Global_values.head_location) + 1.000).toFixed(3);
+                            head_point = document.getElementById(Global_values.head_location + "");
+                            offset.top += 30;
+                            break;
+                    }
+                    Global_values.move = event;
+                    //이번에 밟은 땅이 벽이나 몸통,폭탄이면 에러발생
+                    if(head_point.innerHTML == '<img src="head.png">' ||
+                        head_point.innerHTML == '<img src="tail.png">' ||
+                        head_point.innerHTML == '<img src="boom.png">' ||
+                        head_point.innerHTML == null
+                    ){
+                        throw "E";
+                    }
+                    //플레이어가 움직인 위치정보를 중복없이 각<td>의 name속성에 저장
+                    head_point.setAttribute('name', (++Global_values.name_count)+"");
+                    //아이템을 먹었는지 검사
+                    eat_item(head_point);
+
+                    //이번에 밟은 땅이 벽이나 몸통이 아니면 머리 생성
+                    head_point.innerHTML = "<img src='head.png'>";
+                    //현재 화면을 머리의 중앙으로 이동(이동시간 0초 지정)
+                    $('html, body').animate({scrollLeft : offset.left, scrollTop : offset.top},0);
+                }catch(exception){
+                    alert("Game Over");
+                    head_point.innerHTML = "<img src='head.png'>";
+                    clearInterval(Global_values.ing);
+                    clearInterval(Global_values.random_ing);
+
+                    //GameOver만족시 쓰레드 전부 종료
+                    Global_values.isIntervalPlaying = 1;
+                    Global_values.random_check = 1;
+                    return;
+                }
+            }
+        }
+
+        //하단 고정바 정보 출력
+        function bar_info() {
+            var bar = document.getElementById("fix");
+            bar.innerHTML = "<font color=#006400>몸 길이:"+(-Global_values.tail_count)+"</font>";
+            bar.innerHTML +="<font color=#000000> 폭탄:"+(Global_values.bomb_count)+"</font>";
+            bar.innerHTML +="<font color=#FF1493> 먹이:"+(Global_values.long_count)+"</font>";
+            bar.innerHTML +="<font color=#FF0000> Fast item:"+(Global_values.fast_count)+"</font>";
+            bar.innerHTML +="<font color=#0000FF> Slow item:"+(Global_values.slow_count)+"</font>";
+            bar.innerHTML +="<font color=#800080> Delay Speed:"+(Global_values.SleepTIme)+"</font>";
+            bar.innerHTML +="<font color=#000000> // P 입력시 일시정지</font>";
+        }
+
+        function eat_item(head_point) {
+            var tail_point = null;
+
+            //꼬리 길어지는 아이템을 먹었을시
+            if(head_point.innerHTML == '<img src="long_item.png">'){
+                Global_values.tail_count--;
+                Global_values.long_count--;
+            }
+            else {
+                //꼬리 길어지는 아이템을 안먹었을시 마지막꼬리 짜르기
+                tail_point = document.getElementsByName((Global_values.name_count + Global_values.tail_count) + "");
+                tail_point[0].innerHTML = "<img src='blank.png'>";
+            }
+
+            //빨라지는 아이템을 먹었을시 속도증가
+            if(head_point.innerHTML == '<img src="fast.png">'){
+                Global_values.fast_count--;
+                clearInterval(Global_values.ing);
+                Global_values.ing = setInterval("Start(Global_values.eventSave)", Global_values.SleepTIme-=10);
+            }
+
+            //느려지는 아이템을 먹었을시 속도 감소
+            if(head_point.innerHTML == '<img src="slow.png">'){
+                Global_values.slow_count--;
+                clearInterval(Global_values.ing);
+                Global_values.ing = setInterval("Start(Global_values.eventSave)", Global_values.SleepTIme+=5);
+            }
+        }
+
+        function CreateTable() {
+            //테이블 동적생성
+            var Get_Table = document.getElementById("tab");
+            var Create_TR = document.createElement("TR");
+            var Create_TD = document.createElement("TD");
+
+            Global_values.check = 0;
+            //입력 받은 사이즈만큼 A*A 길이 생성
+            for(var i = 0; i<input; i++) {
+                Create_TR = document.createElement("TR");
+                for (var j = 0; j < input; j++) {
+                    Create_TD = document.createElement("TD");
+                    Create_TD.innerHTML = "<img src='blank.png'>";
+                    if(j<10)
+                        Create_TD.setAttribute('id',i+".00"+j);
+                    else if(j<100)
+                        Create_TD.setAttribute('id',i+".0"+j);
+                    else
+                        Create_TD.setAttribute('id',i+"."+j);
+                    Create_TR.appendChild(Create_TD);
+                }
+
+                //테이블에 적용
+                Get_Table.appendChild(Create_TR);
+            }
+
+            bar_info();
+
+            //시작점 출력
+            if((input/2)<10)
+                Global_values.head_location = parseInt(input/2)+".00"+parseInt(input/2);
+            else if((input/2)<100)
+                Global_values.head_location = parseInt(input/2)+".0"+parseInt(input/2);
+            else
+                Global_values.head_location = parseInt(input/2)+"."+parseInt(input/2);
+
+            //처음 시작하는 머리부분의 name속성 추가
+            var Create_First = document.getElementById(Global_values.head_location+"");
+            Create_First.innerHTML = "<img src='head.png'>";
+            Create_First.setAttribute('name', (++Global_values.name_count)+"");
+
+            //아이템 생성
+            for(var i = 0; i<input/3; i++) {
+                RandomItem("long_item.png");
+                Global_values.long_count++;
+                RandomItem("boom.png");
+                Global_values.bomb_count++;
+            }
+            for(var i = 0; i<input/5; i++){
+                RandomItem("fast.png");
+                Global_values.fast_count++;
+                RandomItem("slow.png");
+                Global_values.slow_count++;
+            }
+
+
+
+            //시작버튼 -> 삭제버튼으로 변경
+            var Cre_BT = document.getElementById("CBT");
+            Cre_BT.setAttribute('value', '보드판 감추기+다시하기');
+            Cre_BT.setAttribute('onclick', 'Replay_Game()');
+            Cre_BT.setAttribute('id', 'DBT');
+
+            //다음 설명 적기
+            var info = document.getElementById("Info");
+            info.setAttribute('value','방향키를 누를시 게임시작/ P키 누를시 일시정지');
+
+            //시작화면을 중앙으로 전환 - 현재 window의 가로 세로길이를 구하여 중앙으로
+            var offset = $(Create_First).offset();
+            offset.left -= (window.innerWidth/2);
+            offset.top -= (window.innerHeight/2-90);
+            $('html, body').animate({scrollLeft : offset.left, scrollTop : offset.top},0);
+        }
+
+        function Replay_Game() {
+            Global_values.ing = 0;
+            Global_values.random_ing = 0;
+            Global_values.random_check = 0;
+            Global_values.eventSave = null;
+            Global_values.isIntervalPlaying = 0;
+            Global_values.head_location = "0.000";
+            Global_values.tail_count = -1;
+            Global_values.check = 1;
+            Global_values.name_count = 2;
+            Global_values.move = 0;
+            Global_values.SleepTIme = 100;
+            clearInterval(Global_values.ing);
+            clearInterval(Global_values.random_ing);
+
+            //생성 삭제
+            var Get_Table = document.getElementById("tab");
+            for(var i = 0; i<input; i++)
+                Get_Table.removeChild(Get_Table.lastChild);
+
+            //삭제버튼 -> 시작버튼으로 변경
+            var Cre_BT = document.getElementById("DBT");
+            Cre_BT.setAttribute('value', '보드판 생성');
+            Cre_BT.setAttribute('onclick', 'CreateTable()');
+            Cre_BT.setAttribute('id', 'CBT');
+
+            var info = document.getElementById("Info");
+            info.setAttribute('value','보드판 생성 버튼을 누르세요');
+        }
+
+        function RandomItem(item) {
+            //x,y랜덤값 생성
+            while(true){
+                //생성된 위치에 아무거도 없을동안 반복 -> 겹치지 않게
+                var ran_x = Math.floor(Math.random() * input);
+                var ran_y = Math.floor(Math.random() * input);
+
+                //소숫점 만들기
+                if (ran_y < 10)
+                    ran_y = ".00" + ran_y;
+                else if (ran_y < 100)
+                    ran_y = ".0" + ran_y;
+                else
+                    ran_y = "." + ran_y;
+
+                //합체
+                ran_x += ran_y;
+
+                var Long_Item = document.getElementById(ran_x + "");
+
+                //지금 위치에 아무거도 없을시 그자리에 그림 출력
+                if(Long_Item.innerHTML == '<img src="blank.png">')
+                    break;
+            }
+            Long_Item.innerHTML = '<img src='+item+'>';
+        }
+
+        function Random_Create_Item() {
+            var random_time = Math.floor(Math.random() * 10);
+            switch(random_time){
+                case 1:
+                    RandomItem("long_item.png");
+                    Global_values.long_count++;
+                    break;
+                case 2:
+                    RandomItem("fast.png");
+                    Global_values.fast_count++;
+                    break;
+                case 3:
+                    RandomItem("slow.png");
+                    Global_values.slow_count++;
+                    break;
+                case 4:
+                    RandomItem("boom.png");
+                    Global_values.bomb_count++;
+                    break;
+                case 5:
+                case 6:
+                case 6:
+                    RandomItem("long_item.png");
+                    Global_values.long_count++;
+                    break;
+            }
+
+        }
+    </script>
+
+</head>
+<body>
+
+<!--<embed id="player" src="ab.mp3" autostart=true hidden=true loop=false type="audio/mp3">-->
+
+    <input type='button' value ="보드판 생성" onclick="CreateTable()" id = "CBT">
+    <input type="text" value = "보드판 생성 버튼을 누르세요" id = "Info" size = "40">
+    <hr>
+    <table border="2" style="border-color: black">
+        <tbody>
+        <tr>
+            <td>
+                <table id = "tab" border ="1">
+                </table>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+    <div style="font-size:2.0em; font-family: 궁서체" class="fixed_div" id = "fix"></div>
+    <div id="test"></div>
+
+</body>
+</html>
