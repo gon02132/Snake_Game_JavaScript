@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <title>Title</title>
     <style>
+        body, table, div, p{font-family: "JK Gothic M"; src:url('/jk.ttf')}
         /* 테이블과 이미지의 간격을 딱맞추기위해 0으로 초기화*/
         table{
             border:0px;
@@ -40,7 +41,7 @@
 
         //최초 사이즈 입력
         while(true) {
-            var input = prompt("가로*세로 길이를 입력하세요(2-150) @@ 권장:100 @@");
+            var input = prompt("横*縦 サイズを入力してください(2-150) @@ 進め:100 @@");
             if(input>=2 && input<=150)
                 break;
         }
@@ -55,7 +56,7 @@
             check: 0,
             name_count: 2,
             move: 0,
-            SleepTIme: 1000,
+            SleepTIme: 100,
             bomb_count: 0,
             fast_count: 0,
             slow_count: 0,
@@ -216,13 +217,13 @@
         //하단 고정바 정보 출력
         function bar_info() {
             var bar = document.getElementById("fix");
-            bar.innerHTML = "<font color=#006400>몸 길이:"+(-Global_values.tail_count)+"</font>";
-            bar.innerHTML +="<font color=#000000> 폭탄:"+(Global_values.bomb_count)+"</font>";
-            bar.innerHTML +="<font color=#FF1493> 먹이:"+(Global_values.long_count)+"</font>";
+            bar.innerHTML = "<font color=#006400>長さ:"+(-Global_values.tail_count)+"</font>";
+            bar.innerHTML +="<font color=#000000> 爆弾:"+(Global_values.bomb_count)+"</font>";
+            bar.innerHTML +="<font color=#FF1493> 餌:"+(Global_values.long_count)+"</font>";
             bar.innerHTML +="<font color=#FF0000> Fast item:"+(Global_values.fast_count)+"</font>";
             bar.innerHTML +="<font color=#0000FF> Slow item:"+(Global_values.slow_count)+"</font>";
             bar.innerHTML +="<font color=#800080> Delay Speed:"+(Global_values.SleepTIme)+"</font>";
-            bar.innerHTML +="<font color=#000000> // P 입력시 일시정지</font>";
+            bar.innerHTML +="<font color=#000000> // P 入力し一時停止</font>";
         }
 
         function eat_item(head_point) {
@@ -313,13 +314,13 @@
 
             //시작버튼 -> 삭제버튼으로 변경
             var Cre_BT = document.getElementById("CBT");
-            Cre_BT.setAttribute('value', '보드판 감추기+다시하기');
+            Cre_BT.setAttribute('value', 'ボード削除+リトライ');
             Cre_BT.setAttribute('onclick', 'Replay_Game()');
             Cre_BT.setAttribute('id', 'DBT');
 
             //다음 설명 적기
             var info = document.getElementById("Info");
-            info.setAttribute('value','방향키를 누를시 게임시작/ P키 누를시 일시정지');
+            info.setAttribute('value','方向キーを押すとゲームスタート/Pキーを押すと一時停止');
 
             //시작화면을 중앙으로 전환 - 현재 window의 가로 세로길이를 구하여 중앙으로
             var offset = $(Create_First).offset();
@@ -350,12 +351,12 @@
 
             //삭제버튼 -> 시작버튼으로 변경
             var Cre_BT = document.getElementById("DBT");
-            Cre_BT.setAttribute('value', '보드판 생성');
+            Cre_BT.setAttribute('value', 'ぼーど');
             Cre_BT.setAttribute('onclick', 'CreateTable()');
             Cre_BT.setAttribute('id', 'CBT');
 
             var info = document.getElementById("Info");
-            info.setAttribute('value','보드판 생성 버튼을 누르세요');
+            info.setAttribute('value','ボード生成ボタンを押してください');
         }
 
         function RandomItem(item) {
@@ -420,8 +421,8 @@
 
 <!--<embed id="player" src="ab.mp3" autostart=true hidden=true loop=false type="audio/mp3">-->
 
-    <input type='button' value ="보드판 생성" onclick="CreateTable()" id = "CBT">
-    <input type="text" value = "보드판 생성 버튼을 누르세요" id = "Info" size = "40">
+    <input type='button' value ="ボード生成" onclick="CreateTable()" id = "CBT">
+    <input type="text" value = "ボード生成ボタンを押してください" id = "Info" size = "45">
     <hr>
     <table border="2" style="border-color: black">
         <tbody>
